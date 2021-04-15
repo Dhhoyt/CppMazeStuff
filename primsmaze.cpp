@@ -25,23 +25,22 @@ void PrimsMaze::generate(int seed){
     Cell init_cell(
     init_cell.x = rand() % width,
     init_cell.y = rand() % height);
-    cells.push_back(init_cell);
+    add_cell(init_cell);
     add_walls(init_cell);
     while (walls.size() > 0){
-        std::cout << walls.size() << "\r";
-        int wall_index = rand() % walls.size();
-        Wall current = walls.at(wall_index);
+        //std::cout << walls.size() << "\r";
+        Wall current = walls.random_element<std::mt19937>(rand);
         if(current.is_horizontal){
             AbstractMaze::Cell upper(current.x, current.y);
             if(!in_cells(upper)){
                 horizontal_gates[current.x][current.y] = false;
-                cells.push_back(upper);
+                add_cell(upper);
                 add_walls(upper);
             }
             AbstractMaze::Cell lower(current.x, current.y+1);
             if(!in_cells(lower)){
                 horizontal_gates[current.x][current.y] = false;
-                cells.push_back(lower);
+                add_cell(lower);
                 add_walls(lower);
             }
         }else{
@@ -49,56 +48,48 @@ void PrimsMaze::generate(int seed){
             if(!in_cells(left)){
                 
                 vertical_gates[current.x][current.y] = false;
-                cells.push_back(left);
+                add_cell(left);
                 add_walls(left);
             }
             AbstractMaze::Cell right(current.x+1, current.y);
             if(!in_cells(right)){
                 vertical_gates[current.x][current.y] = false;
-                cells.push_back(right);
+                add_cell(right);
                 add_walls(right);
             }
         }
-        walls.erase(walls.begin() + wall_index);
+        walls.erase(current);
     }
     
 }
 
 void PrimsMaze::add_walls(AbstractMaze::Cell incell){
     AbstractMaze::Wall upper(incell.x, incell.y -1, true);
-    if(incell.y > 0 && !in_walls(upper)){
-        walls.push_back(upper);
+    if(incell.y > 0){
+        walls.insert(upper);
     }
     AbstractMaze::Wall lower(incell.x, incell.y, true);
-    if(incell.y < height - 1 && !in_walls(lower)){
-        walls.push_back(lower);
+    if(incell.y < height - 1){
+        walls.insert(lower);
     }
     AbstractMaze::Wall left(incell.x - 1, incell.y, false);
-    if(incell.x > 0 && !in_walls(left)){
-        walls.push_back(left);
+    if(incell.x > 0){
+        walls.insert(left);
     }
     AbstractMaze::Wall right(incell.x, incell.y, false);
-    if(incell.x < width - 1 && !in_walls(right)){
-        walls.push_back(right);
+    if(incell.x < width - 1){
+        walls.insert(right);
     }
 }
 
 bool PrimsMaze::in_walls(AbstractMaze::Wall inwall){
-    for(int i = 0; i < walls.size(); i++){
-        AbstractMaze::Wall& current_wall = walls.at(i);
-        if(inwall.x == current_wall.x && inwall.y == current_wall.y && inwall.is_horizontal == current_wall.is_horizontal){
-            return true;
-        }
-    }
-    return false;
+    return walls.has(inwall);
 }
 
 bool PrimsMaze::in_cells(AbstractMaze::Cell incell){
-    for(int i = 0; i < cells.size(); i++){
-        AbstractMaze::Cell& current_cell = cells.at(i);
-        if(incell.x == current_cell.x && incell.y == current_cell.y){
-            return true;
-        }
-    }
-    return false;
+    return cells.find(incell) != cells.end();
+}
+
+void PrimsMaze::add_cell(AbstractMaze::Cell incell){
+    cells.insert(incell);
 }
